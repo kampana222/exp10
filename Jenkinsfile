@@ -1,26 +1,30 @@
+
 pipeline {
     agent any
 
     environment {
-        REGISTRY   = "localhost:5000"
+        REGISTRY   = "127.0.0.1:5000"
         IMAGE_NAME = "student-demo-app"
-        PYTHON     = "C:\\Users\\STUDENT\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+
+        PYTHON = "C:\\Users\\STUDENT\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+
+        DOCKER = "C:\\Users\\STUDENT\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
     }
 
     stages {
-
         stage('1. Checkout Code') {
             steps {
                 checkout scm
-                echo "Source code checked out successfully."
             }
         }
 
         stage('2. Application Build & Test') {
             steps {
                 echo "Verifying Python syntax..."
+
                 bat "\"${PYTHON}\" -m py_compile app.py"
-                echo "Python syntax verification successful."
+
+                echo "Python syntax verified successfully!"
             }
         }
 
@@ -28,38 +32,31 @@ pipeline {
             steps {
                 echo "Building Docker image..."
 
-                bat "docker build -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} -t ${REGISTRY}/${IMAGE_NAME}:latest ."
-
-                echo "Docker image built successfully."
+                bat "\"${DOCKER}\" build -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} -t ${REGISTRY}/${IMAGE_NAME}:latest ."
             }
         }
 
         stage('4. Push Image to Registry') {
             steps {
-                echo "Pushing versioned Docker image..."
+                echo "Pushing versioned image..."
 
-                bat "docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                bat "\"${DOCKER}\" push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
 
-                echo "Pushing latest Docker image..."
+                echo "Pushing latest image..."
 
-                bat "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
-
-                echo "Docker images pushed successfully."
+                bat "\"${DOCKER}\" push ${REGISTRY}/${IMAGE_NAME}:latest"
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline succeeded! Image ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} is available in the registry."
+            echo "Pipeline succeeded!"
+            echo "Docker image: ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
         }
 
         failure {
-            echo "Pipeline failed. Please check the Jenkins console output."
-        }
-
-        always {
-            echo "Jenkins pipeline execution completed."
+            echo "Pipeline failed! Check Console Output."
         }
     }
 }
